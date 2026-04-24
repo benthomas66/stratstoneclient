@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MELLOFX — Jonathan Perez</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,300&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --black:#050505;--dark:#0c0c0c;--card:#111;--border:#1c1c1c;
+  --gold:#d4a94b;--gold2:#f0c96a;--glow:rgba(212,169,75,0.14);
+  --red:#e84040;--green:#2ecc71;--white:#f2f2ee;--muted:#555;
+}
+html{scroll-behavior:smooth}
+body{background:var(--black);color:var(--white);font-family:'DM Sans',sans-serif;font-weight:300;overflow-x:hidden}
+
+/* CURSOR GLOW */
+#cursor-glow{position:fixed;width:420px;height:420px;border-radius:50%;background:radial-gradient(circle,rgba(212,169,75,0.07) 0%,transparent 70%);pointer-events:none;z-index:9999;transform:translate(-50%,-50%);mix-blend-mode:screen}
+
+/* SCROLL REVEALS */
+.reveal{opacity:0;transform:translateY(30px);transition:opacity 0.7s ease,transform 0.7s ease}
+.reveal.visible{opacity:1;transform:translateY(0)}
+.reveal-left{opacity:0;transform:translateX(-40px);transition:opacity 0.7s ease,transform 0.7s ease}
+.reveal-left.visible{opacity:1;transform:translateX(0)}
+.reveal-right{opacity:0;transform:translateX(40px);transition:opacity 0.7s ease,transform 0.7s ease}
+.reveal-right.visible{opacity:1;transform:translateX(0)}
+.reveal-delay-1{transition-delay:0.1s}.reveal-delay-2{transition-delay:0.2s}
+.reveal-delay-3{transition-delay:0.3s}.reveal-delay-4{transition-delay:0.4s}
+
+/* PRICE BAR */
+.price-bar{background:var(--dark);border-bottom:1px solid var(--border);overflow:hidden;padding:0.55rem 0;white-space:nowrap}
+.price-track{display:inline-block;animation:pticker 40s linear infinite}
+@keyframes pticker{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.price-item{display:inline-flex;align-items:center;gap:0.4rem;margin:0 1.8rem;font-size:0.73rem;font-weight:500;letter-spacing:0.04em}
+.psym{color:var(--muted)}.pval{color:var(--white)}.pchg.up{color:var(--green)}.pchg.dn{color:var(--red)}
+.live-dot{width:5px;height:5px;background:var(--green);border-radius:50%;display:inline-block;animation:blink 1.4s ease-in-out infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.2}}
+
+/* NAV */
+nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;justify-content:space-between;align-items:center;padding:1rem 3.5rem;background:rgba(5,5,5,0.92);backdrop-filter:blur(18px);border-bottom:1px solid var(--border)}
+.nav-logo{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:0.12em;color:var(--gold);text-decoration:none;text-shadow:0 0 30px rgba(212,169,75,0.35)}
+.nav-links{display:flex;gap:2.5rem;list-style:none}
+.nav-links a{color:var(--muted);text-decoration:none;font-size:0.78rem;font-weight:500;letter-spacing:0.12em;text-transform:uppercase;transition:color 0.2s}
+.nav-links a:hover{color:var(--gold)}
+.nav-cta{background:var(--gold);color:var(--black);padding:0.55rem 1.4rem;font-size:0.78rem;font-weight:600;letter-spacing:0.15em;text-transform:uppercase;text-decoration:none;clip-path:polygon(8px 0%,100% 0%,calc(100% - 8px) 100%,0% 100%);transition:background 0.2s,transform 0.15s}
+.nav-cta:hover{background:var(--gold2);transform:translateY(-1px)}
+
+/* HERO */
+#hero{position:relative;height:100vh;min-height:650px;display:flex;align-items:center;overflow:hidden}
+.hero-bg{
+  position:absolute;inset:0;will-change:transform;
+  background-image:url('/images/hero.jpeg');
+  background-size:cover;background-position:center 30%;
+  filter:brightness(0.55) saturate(0.85);
+  animation:hzoom 15s ease both;
+}
+@keyframes hzoom{from{transform:scale(1.07)}to{transform:scale(1.0)}}
+.hero-grad{position:absolute;inset:0;background:linear-gradient(90deg,rgba(5,5,5,0.95) 35%,rgba(5,5,5,0.1) 100%),linear-gradient(to top,rgba(5,5,5,0.95) 0%,transparent 55%)}
+.hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(212,169,75,1) 1px,transparent 1px),linear-gradient(90deg,rgba(212,169,75,1) 1px,transparent 1px);background-size:55px 55px;animation:gridappear 2s ease 0.5s forwards;opacity:0}
+@keyframes gridappear{to{opacity:0.03}}
+.hero-scan{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 0%,rgba(212,169,75,0.025) 50%,transparent 100%);animation:scan 7s ease-in-out infinite}
+@keyframes scan{0%,100%{transform:translateY(-100%)}50%{transform:translateY(100%)}}
+.hero-content{position:relative;z-index:2;padding:0 4rem;max-width:820px;animation:hup 1s ease 0.5s both}
+@keyframes hup{from{opacity:0;transform:translateY(50px)}to{opacity:1;transform:translateY(0)}}
+.hero-eyebrow{display:inline-flex;align-items:center;gap:0.6rem;font-size:0.7rem;font-weight:600;letter-spacing:0.25em;text-transform:uppercase;color:var(--gold);margin-bottom:1.5rem}
+.hero-eyebrow::before{content:'';width:28px;height:1px;background:var(--gold)}
+.hero-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(4.5rem,10vw,9rem);line-height:0.9;letter-spacing:0.03em;margin-bottom:1.5rem}
+.hero-title span{color:var(--gold);text-shadow:0 0 80px rgba(212,169,75,0.4)}
+.hero-sub{font-size:1rem;color:rgba(242,242,238,0.5);max-width:440px;line-height:1.8;margin-bottom:2.5rem;font-weight:400}
+.hero-btns{display:flex;gap:1rem;flex-wrap:wrap}
+.btn-gold{background:var(--gold);color:var(--black);padding:0.9rem 2.2rem;font-size:0.82rem;font-weight:700;letter-spacing:0.18em;text-transform:uppercase;text-decoration:none;clip-path:polygon(10px 0%,100% 0%,calc(100% - 10px) 100%,0% 100%);transition:background 0.2s,transform 0.15s;display:inline-block}
+.btn-gold:hover{background:var(--gold2);transform:translateY(-2px)}
+.btn-outline{border:1px solid rgba(212,169,75,0.35);color:var(--gold);padding:0.9rem 2.2rem;font-size:0.82rem;font-weight:500;letter-spacing:0.15em;text-transform:uppercase;text-decoration:none;transition:border-color 0.2s,background 0.2s}
+.btn-outline:hover{border-color:var(--gold);background:var(--glow)}
+
+/* STATS */
+#stats{display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid var(--border);border-bottom:1px solid var(--border);background:var(--dark)}
+.stat-cell{padding:2.8rem 1.5rem;text-align:center;border-right:1px solid var(--border);position:relative;overflow:hidden;transition:background 0.3s}
+.stat-cell:last-child{border-right:none}
+.stat-cell::after{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at center,var(--glow),transparent 70%);opacity:0;transition:opacity 0.4s}
+.stat-cell:hover::after{opacity:1}
+.stat-num{font-family:'Bebas Neue',sans-serif;font-size:3.2rem;letter-spacing:0.05em;color:var(--gold);line-height:1;margin-bottom:0.3rem}
+.stat-lbl{font-size:0.7rem;letter-spacing:0.18em;text-transform:uppercase;color:var(--muted);font-weight:500}
+
+/* GOLD TICKER */
+.gold-ticker{background:var(--gold);overflow:hidden;padding:0.7rem 0;white-space:nowrap}
+.gold-track{display:inline-block;animation:gtick 28s linear infinite}
+@keyframes gtick{from{transform:translateX(0)}to{transform:translateX(-50%)}}
+.gold-item{display:inline-block;font-size:0.7rem;font-weight:700;letter-spacing:0.22em;text-transform:uppercase;color:var(--black);margin:0 2.2rem}
+.gdot{display:inline-block;width:4px;height:4px;background:rgba(0,0,0,0.35);border-radius:50%;margin:0 0.4rem;vertical-align:middle}
+
+/* SERVICES */
+#services{padding:7rem 3.5rem;max-width:1200px;margin:0 auto}
+.sec-label{font-size:0.68rem;letter-spacing:0.3em;text-transform:uppercase;color:var(--gold);font-weight:600;margin-bottom:0.7rem}
+.sec-title{font-family:'Bebas Neue',sans-serif;font-size:clamp(2.8rem,5vw,4.5rem);letter-spacing:0.04em;line-height:0.92;margin-bottom:3.5rem}
+.sec-title span{color:var(--gold)}
+.tabs{display:flex;border-bottom:1px solid var(--border);margin-bottom:3.5rem;overflow-x:auto}
+.tab-btn{padding:1rem 1.9rem;background:none;border:none;border-bottom:2px solid transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:0.76rem;font-weight:600;letter-spacing:0.14em;text-transform:uppercase;cursor:pointer;white-space:nowrap;transition:color 0.2s,border-color 0.2s;margin-bottom:-1px}
+.tab-btn:hover{color:var(--white)}.tab-btn.active{color:var(--gold);border-bottom-color:var(--gold)}
+.tab-pane{display:none;animation:tin 0.35s ease}
+.tab-pane.active{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:center}
+@keyframes tin{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.t-icon{font-size:1.8rem;margin-bottom:1rem}
+.t-title{font-family:'Bebas Neue',sans-serif;font-size:2.8rem;letter-spacing:0.04em;line-height:1;margin-bottom:0.8rem}
+.t-desc{color:rgba(242,242,238,0.5);line-height:1.85;font-size:0.9rem;margin-bottom:1.5rem}
+.t-list{list-style:none;display:flex;flex-direction:column;gap:0.7rem;margin-bottom:2rem}
+.t-list li{display:flex;align-items:flex-start;gap:0.7rem;font-size:0.87rem;color:rgba(242,242,238,0.75)}
+.t-list li::before{content:'▸';color:var(--gold);flex-shrink:0}
+.t-visual{position:relative}
+.t-img{width:100%;aspect-ratio:16/11;object-fit:cover;filter:brightness(0.8) saturate(0.9);border:1px solid var(--border)}
+.corner{position:absolute;width:36px;height:36px;border-color:var(--gold);border-style:solid;opacity:0.5}
+.corner.tl{top:-7px;left:-7px;border-width:2px 0 0 2px}
+.corner.br{bottom:-7px;right:-7px;border-width:0 2px 2px 0}
+
+/* P&L CHART */
+#pnl{background:var(--dark);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:7rem 3.5rem}
+#pnl .inner{max-width:1100px;margin:0 auto;display:grid;grid-template-columns:1fr 1.6fr;gap:5rem;align-items:center}
+.pnl-text p{color:rgba(242,242,238,0.5);line-height:1.85;font-size:0.9rem;margin-bottom:1.2rem}
+.pnl-metrics{display:flex;flex-direction:column;gap:1rem;margin-top:2rem}
+.pnl-metric{display:flex;justify-content:space-between;align-items:center;padding:0.9rem 1rem;background:var(--card);border:1px solid var(--border)}
+.pm-label{font-size:0.72rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted)}
+.pm-val{font-family:'Bebas Neue',sans-serif;font-size:1.5rem;letter-spacing:0.05em;color:var(--green)}
+.pnl-chart-wrap{position:relative}
+#pnlChart{width:100%;height:280px}
+.chart-label{position:absolute;top:12px;right:12px;font-size:0.68rem;letter-spacing:0.1em;text-transform:uppercase;color:var(--muted)}
+
+/* QUIZ */
+#quiz{padding:7rem 3.5rem;max-width:860px;margin:0 auto;text-align:center}
+.quiz-progress{display:flex;gap:0.4rem;justify-content:center;margin:2rem 0}
+.qp-dot{width:8px;height:8px;border-radius:50%;background:var(--border);transition:background 0.3s}
+.qp-dot.active{background:var(--gold)}
+.quiz-steps{position:relative;min-height:280px}
+.quiz-step{display:none;animation:tin 0.4s ease}
+.quiz-step.active{display:block}
+.quiz-q{font-family:'Bebas Neue',sans-serif;font-size:2.2rem;letter-spacing:0.04em;margin-bottom:2rem;line-height:1.1}
+.quiz-options{display:flex;flex-wrap:wrap;gap:0.75rem;justify-content:center}
+.quiz-opt{padding:0.8rem 1.6rem;border:1px solid var(--border);color:var(--muted);font-size:0.8rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;cursor:pointer;transition:all 0.2s;background:var(--card);font-family:'DM Sans',sans-serif}
+.quiz-opt:hover,.quiz-opt.selected{border-color:var(--gold);color:var(--gold);background:var(--glow)}
+#quiz-result{display:none;animation:tin 0.5s ease}
+.result-card{background:var(--card);border:1px solid rgba(212,169,75,0.3);padding:3rem;margin-top:1rem;position:relative;overflow:hidden}
+.result-card::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--gold),transparent)}
+.result-service{font-family:'Bebas Neue',sans-serif;font-size:3rem;letter-spacing:0.06em;color:var(--gold);margin-bottom:0.5rem}
+.result-desc{color:rgba(242,242,238,0.6);line-height:1.8;font-size:0.9rem;margin-bottom:2rem}
+.quiz-restart{background:none;border:none;color:var(--muted);font-size:0.75rem;font-family:'DM Sans',sans-serif;cursor:pointer;letter-spacing:0.1em;text-transform:uppercase;margin-top:1.5rem;text-decoration:underline;transition:color 0.2s}
+.quiz-restart:hover{color:var(--gold)}
+
+/* WINS FEED */
+#wins{background:var(--dark);border-top:1px solid var(--border);border-bottom:1px solid var(--border);padding:7rem 3.5rem}
+#wins .inner{max-width:1200px;margin:0 auto}
+.wins-top{display:grid;grid-template-columns:1fr 1fr;gap:5rem;align-items:start;margin-bottom:4rem}
+.wins-stat-row{display:flex;gap:1rem;margin-top:2rem;flex-wrap:wrap}
+.wstat{background:var(--card);border:1px solid var(--border);padding:1.2rem 1.5rem;text-align:center;flex:1}
+.wstat-n{font-family:'Bebas Neue',sans-serif;font-size:2rem;color:var(--green);letter-spacing:0.05em}
+.wstat-l{font-size:0.7rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-top:0.2rem}
+.feed-label{font-size:0.68rem;letter-spacing:0.2em;text-transform:uppercase;color:var(--muted);margin-bottom:0.8rem;display:flex;align-items:center;gap:0.5rem}
+.wins-feed-wrap{height:360px;overflow:hidden;position:relative}
+.wins-feed-wrap::before,.wins-feed-wrap::after{content:'';position:absolute;left:0;right:0;z-index:2;height:60px;pointer-events:none}
+.wins-feed-wrap::before{top:0;background:linear-gradient(to bottom,var(--dark),transparent)}
+.wins-feed-wrap::after{bottom:0;background:linear-gradient(to top,var(--dark),transparent)}
+.wins-feed{display:flex;flex-direction:column;gap:0.6rem;padding:10px 0}
+.win-entry{display:flex;align-items:center;gap:0.8rem;background:var(--card);border:1px solid var(--border);padding:0.75rem 1rem;font-size:0.82rem;animation:winslide 0.5s ease}
+.win-entry:hover{border-color:rgba(46,204,113,0.3)}
+@keyframes winslide{from{opacity:0;transform:translateX(-20px)}to{opacity:1;transform:translateX(0)}}
+.we-icon{font-size:1rem;flex-shrink:0}.we-name{color:var(--white);font-weight:500;flex:1}
+.we-amount{color:var(--green);font-family:'Bebas Neue',sans-serif;font-size:1.2rem;letter-spacing:0.05em}
+.we-time{color:var(--muted);font-size:0.7rem}
+.wins-photos{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+.wins-photo{width:100%;aspect-ratio:4/3;object-fit:cover;object-position:center top;border:1px solid var(--border);filter:brightness(0.85);transition:filter 0.3s}
+.wins-photo:hover{filter:brightness(1)}
+
+/* CAROUSEL */
+#testimonials{padding:7rem 3.5rem;max-width:1200px;margin:0 auto}
+.carousel-wrap{position:relative;overflow:hidden;margin-top:3rem}
+.carousel-track{display:flex;transition:transform 0.6s cubic-bezier(0.25,1,0.5,1)}
+.tcard{min-width:calc(33.333% - 1rem);margin-right:1.5rem;background:var(--card);border:1px solid var(--border);padding:2rem;position:relative;flex-shrink:0;transition:border-color 0.3s}
+.tcard::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0;transition:opacity 0.3s}
+.tcard:hover::before{opacity:1}.tcard:hover{border-color:rgba(212,169,75,0.25)}
+.tcard-quote{font-size:0.92rem;color:rgba(242,242,238,0.6);line-height:1.8;margin-bottom:1.5rem;font-style:italic}
+.tcard-name{font-weight:600;font-size:0.88rem}
+.tcard-result{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--green);letter-spacing:0.05em}
+.tcard-service{font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-top:0.2rem}
+.carousel-nav{display:flex;gap:0.5rem;margin-top:2rem;justify-content:center}
+.cnav-dot{width:6px;height:6px;border-radius:50%;background:var(--border);cursor:pointer;transition:background 0.3s,transform 0.2s}
+.cnav-dot.active{background:var(--gold);transform:scale(1.4)}
+.carousel-arrows{display:flex;gap:0.75rem;margin-top:1.5rem;justify-content:center}
+.carr{background:none;border:1px solid var(--border);color:var(--muted);width:40px;height:40px;cursor:pointer;font-size:1rem;transition:all 0.2s;font-family:'DM Sans',sans-serif}
+.carr:hover{border-color:var(--gold);color:var(--gold)}
+
+/* ABOUT */
+#about{padding:7rem 3.5rem;max-width:1200px;margin:0 auto}
+.about-grid{display:grid;grid-template-columns:1fr 1fr;gap:6rem;align-items:center}
+.about-img-stack{position:relative;height:560px}
+.aimg{position:absolute;object-fit:cover;border:1px solid var(--border);transition:filter 0.3s}
+.aimg1{width:72%;height:72%;top:0;left:0;filter:brightness(0.8)}
+.aimg2{width:55%;height:52%;bottom:0;right:0;filter:brightness(0.75);border-color:rgba(212,169,75,0.25)}
+.aimg:hover{filter:brightness(0.95) !important}
+.aimg-line{position:absolute;bottom:-12px;left:-12px;width:45%;height:45%;border:1px solid rgba(212,169,75,0.15);z-index:-1}
+.about-body p{color:rgba(242,242,238,0.52);line-height:1.9;font-size:0.9rem;margin-bottom:1.1rem}
+.about-sig{margin-top:2rem;padding-top:2rem;border-top:1px solid var(--border)}
+.sig-name{font-family:'Bebas Neue',sans-serif;font-size:1.8rem;letter-spacing:0.08em;color:var(--gold)}
+.sig-role{font-size:0.73rem;letter-spacing:0.14em;text-transform:uppercase;color:var(--muted);margin-top:0.2rem}
+
+/* FAQ */
+#faq{background:var(--dark);border-top:1px solid var(--border);padding:7rem 3.5rem}
+#faq .inner{max-width:820px;margin:0 auto}
+.faq-head{text-align:center;margin-bottom:4rem}
+.faq-item{border-bottom:1px solid var(--border)}
+.faq-q{width:100%;background:none;border:none;color:var(--white);font-family:'DM Sans',sans-serif;font-size:0.95rem;font-weight:500;text-align:left;padding:1.6rem 0;display:flex;justify-content:space-between;align-items:center;cursor:pointer;gap:1rem;transition:color 0.2s}
+.faq-q:hover{color:var(--gold)}
+.faq-ico{font-family:'Bebas Neue',sans-serif;font-size:1.6rem;color:var(--gold);flex-shrink:0;transition:transform 0.3s;line-height:1}
+.faq-item.open .faq-ico{transform:rotate(45deg)}
+.faq-a{max-height:0;overflow:hidden;transition:max-height 0.4s ease,padding 0.3s}
+.faq-item.open .faq-a{max-height:300px;padding-bottom:1.5rem}
+.faq-a p{color:rgba(242,242,238,0.5);line-height:1.85;font-size:0.88rem}
+
+/* CONTACT */
+#contact{padding:8rem 3.5rem;text-align:center;position:relative;overflow:hidden}
+#contact::before{content:'MELLOFX';position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);font-family:'Bebas Neue',sans-serif;font-size:20vw;letter-spacing:0.05em;color:rgba(212,169,75,0.025);pointer-events:none;white-space:nowrap}
+.contact-inner{position:relative;z-index:1;max-width:580px;margin:0 auto}
+.contact-inner p{color:rgba(242,242,238,0.5);line-height:1.85;font-size:0.92rem;margin-bottom:2.5rem}
+.socials{display:flex;justify-content:center;gap:0.6rem;flex-wrap:wrap;margin-bottom:2.5rem}
+.soc-btn{padding:0.65rem 1.3rem;border:1px solid var(--border);color:var(--muted);font-size:0.76rem;font-weight:500;letter-spacing:0.1em;text-transform:uppercase;text-decoration:none;transition:all 0.2s}
+.soc-btn:hover{border-color:var(--gold);color:var(--gold);background:var(--glow)}
+
+/* FOOTER */
+footer{border-top:1px solid var(--border);padding:2rem 3.5rem;display:flex;justify-content:space-between;align-items:center;background:var(--dark)}
+.f-logo{font-family:'Bebas Neue',sans-serif;font-size:1.4rem;letter-spacing:0.12em;color:var(--gold)}
+footer p{font-size:0.72rem;color:var(--muted)}
+.f-disc{font-size:0.64rem;color:#333;max-width:300px;text-align:right;line-height:1.5}
+
+/* AI CHAT */
+#chat-bubble{position:fixed;bottom:2rem;right:2rem;z-index:500}
+#chat-toggle{width:56px;height:56px;border-radius:50%;background:var(--gold);border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:1.4rem;box-shadow:0 4px 24px rgba(212,169,75,0.35);transition:transform 0.2s,background 0.2s}
+#chat-toggle:hover{transform:scale(1.08);background:var(--gold2)}
+#chat-panel{position:absolute;bottom:70px;right:0;width:340px;background:var(--card);border:1px solid var(--border);border-radius:4px;display:none;flex-direction:column;overflow:hidden;box-shadow:0 8px 40px rgba(0,0,0,0.6);animation:chatpop 0.3s ease}
+@keyframes chatpop{from{opacity:0;transform:scale(0.92) translateY(10px)}to{opacity:1;transform:scale(1) translateY(0)}}
+#chat-panel.open{display:flex}
+.chat-header{background:var(--black);padding:1rem 1.2rem;display:flex;align-items:center;gap:0.75rem;border-bottom:1px solid var(--border)}
+.chat-avatar{width:36px;height:36px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.chat-hname{font-weight:600;font-size:0.85rem}
+.chat-hstatus{font-size:0.7rem;color:var(--green);display:flex;align-items:center;gap:0.3rem}
+.chat-hstatus::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--green)}
+.chat-close{margin-left:auto;background:none;border:none;color:var(--muted);cursor:pointer;font-size:1.1rem;transition:color 0.2s}
+.chat-close:hover{color:var(--white)}
+.chat-messages{height:260px;overflow-y:auto;padding:1rem;display:flex;flex-direction:column;gap:0.75rem;scroll-behavior:smooth}
+.chat-messages::-webkit-scrollbar{width:3px}
+.chat-messages::-webkit-scrollbar-thumb{background:var(--border)}
+.msg{max-width:85%;padding:0.65rem 0.9rem;border-radius:2px;font-size:0.83rem;line-height:1.55;animation:msgpop 0.25s ease}
+@keyframes msgpop{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:translateY(0)}}
+.msg.bot{background:var(--dark);border:1px solid var(--border);color:rgba(242,242,238,0.8);align-self:flex-start}
+.msg.user{background:var(--gold);color:var(--black);align-self:flex-end;font-weight:500}
+.typing-dots span{display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--muted);margin:0 2px;animation:tdot 1.2s ease-in-out infinite}
+.typing-dots span:nth-child(2){animation-delay:0.2s}.typing-dots span:nth-child(3){animation-delay:0.4s}
+@keyframes tdot{0%,80%,100%{transform:scale(0.6);opacity:0.4}40%{transform:scale(1);opacity:1}}
+.chat-quick{padding:0.6rem;display:flex;gap:0.4rem;flex-wrap:wrap;border-top:1px solid var(--border)}
+.quick-btn{padding:0.35rem 0.7rem;border:1px solid var(--border);background:none;color:var(--muted);font-size:0.72rem;font-family:'DM Sans',sans-serif;cursor:pointer;transition:all 0.2s;white-space:nowrap}
+.quick-btn:hover{border-color:var(--gold);color:var(--gold)}
+.chat-input-row{display:flex;border-top:1px solid var(--border)}
+#chat-input{flex:1;background:var(--black);border:none;padding:0.9rem 1rem;color:var(--white);font-family:'DM Sans',sans-serif;font-size:0.83rem;outline:none}
+#chat-input::placeholder{color:var(--muted)}
+#chat-send{background:var(--gold);border:none;color:var(--black);padding:0 1.1rem;cursor:pointer;font-size:1rem;transition:background 0.2s}
+#chat-send:hover{background:var(--gold2)}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  nav{padding:1rem 1.5rem}.nav-links{display:none}
+  .hero-content{padding:0 1.5rem}
+  #stats{grid-template-columns:repeat(2,1fr)}
+  .stat-cell:nth-child(2){border-right:none}
+  #services,#about,#testimonials{padding:4rem 1.5rem}
+  .tab-pane.active,.about-grid{grid-template-columns:1fr}
+  .about-img-stack{height:280px}
+  #pnl .inner{grid-template-columns:1fr;gap:2.5rem;padding:0 1.5rem}
+  #pnl{padding:4rem 0}
+  #wins,#faq,#contact,#quiz,#testimonials{padding:4rem 1.5rem}
+  .wins-top{grid-template-columns:1fr}
+  .tcard{min-width:calc(100% - 1rem)}
+  footer{flex-direction:column;gap:1rem;text-align:center;padding:2rem 1.5rem}
+  .f-disc{text-align:center;max-width:100%}
+  #chat-panel{width:290px}
+}
+</style>
+</head>
+<body>
+
+<div id="cursor-glow"></div>
+
+<!-- PRICE BAR -->
+<div class="price-bar">
+  <div class="price-track" id="priceTrack"></div>
+</div>
+
+<!-- NAV -->
+<nav>
+  <a href="#" class="nav-logo">MELLOFX</a>
+  <ul class="nav-links">
+    <li><a href="#services">Services</a></li>
+    <li><a href="#wins">Client Wins</a></li>
+    <li><a href="#about">About</a></li>
+    <li><a href="#quiz">Quiz</a></li>
+    <li><a href="#faq">FAQ</a></li>
+  </ul>
+  <a href="#contact" class="nav-cta">Get Started</a>
+</nav>
+
+<!-- HERO -->
+<section id="hero">
+  <div class="hero-bg" id="heroBg"></div>
+  <div class="hero-grad"></div>
+  <div class="hero-grid"></div>
+  <div class="hero-scan"></div>
+  <div class="hero-content">
+    <div class="hero-eyebrow">MELLOFX &nbsp;·&nbsp; 350+ Clients Served</div>
+    <h1 class="hero-title">STOP<br>LEAVING<br><span>MONEY</span><br>BEHIND.</h1>
+    <p class="hero-sub">Stocks. Credit. Real estate. Mortgages. Insurance. One advisor, one vision — Jonathan Perez.</p>
+    <div class="hero-btns">
+      <a href="#contact" class="btn-gold">Book a Free Call</a>
+      <a href="#quiz" class="btn-outline">Find Your Service →</a>
+    </div>
+  </div>
+</section>
+
+<!-- STATS -->
+<section id="stats">
+  <div class="stat-cell reveal reveal-delay-1"><div class="stat-num" data-target="350" data-suffix="+">0</div><div class="stat-lbl">Clients Served</div></div>
+  <div class="stat-cell reveal reveal-delay-2"><div class="stat-num" data-target="5">0</div><div class="stat-lbl">Service Areas</div></div>
+  <div class="stat-cell reveal reveal-delay-3"><div class="stat-num">—</div><div class="stat-lbl">Years Active</div></div>
+  <div class="stat-cell reveal reveal-delay-4"><div class="stat-num">—</div><div class="stat-lbl">Volume Managed</div></div>
+</section>
+
+<!-- GOLD TICKER -->
+<div class="gold-ticker">
+  <div class="gold-track">
+    <span class="gold-item">Stock Trading<span class="gdot"></span></span>
+    <span class="gold-item">Credit Advice<span class="gdot"></span></span>
+    <span class="gold-item">Real Estate<span class="gdot"></span></span>
+    <span class="gold-item">Mortgages<span class="gdot"></span></span>
+    <span class="gold-item">Insurance<span class="gdot"></span></span>
+    <span class="gold-item">MELLOFX<span class="gdot"></span></span>
+    <span class="gold-item">350+ Clients<span class="gdot"></span></span>
+    <span class="gold-item">Stock Trading<span class="gdot"></span></span>
+    <span class="gold-item">Credit Advice<span class="gdot"></span></span>
+    <span class="gold-item">Real Estate<span class="gdot"></span></span>
+    <span class="gold-item">Mortgages<span class="gdot"></span></span>
+    <span class="gold-item">Insurance<span class="gdot"></span></span>
+    <span class="gold-item">MELLOFX<span class="gdot"></span></span>
+    <span class="gold-item">350+ Clients<span class="gdot"></span></span>
+  </div>
+</div>
+
+<!-- SERVICES -->
+<section id="services">
+  <div class="reveal">
+    <div class="sec-label">What I Do</div>
+    <h2 class="sec-title">EVERY SERVICE<br>YOU NEED. <span>ONE PLACE.</span></h2>
+  </div>
+  <div class="tabs reveal">
+    <button class="tab-btn active" data-tab="t1">📈 Stock Trading</button>
+    <button class="tab-btn" data-tab="t2">💳 Credit Advice</button>
+    <button class="tab-btn" data-tab="t3">🏠 Real Estate</button>
+    <button class="tab-btn" data-tab="t4">🏦 Mortgages</button>
+    <button class="tab-btn" data-tab="t5">🛡 Insurance</button>
+  </div>
+  <div class="tab-pane active" id="t1">
+    <div>
+      <div class="t-icon">📈</div>
+      <h3 class="t-title">STOCK TRADING</h3>
+      <p class="t-desc">Stop guessing. I'll help you build a real, repeatable system built around your risk tolerance and goals.</p>
+      <ul class="t-list">
+        <li>Portfolio strategy and asset allocation</li>
+        <li>Technical analysis and entry/exit framework</li>
+        <li>Risk management and position sizing</li>
+        <li>1-on-1 live coaching sessions</li>
+      </ul>
+      <a href="#contact" class="btn-gold">Book Now</a>
+    </div>
+    <div class="t-visual">
+      <img src="/images/trading.jpeg" class="t-img" alt="Trading">
+      <div class="corner tl"></div><div class="corner br"></div>
+    </div>
+  </div>
+  <div class="tab-pane" id="t2">
+    <div>
+      <div class="t-icon">💳</div>
+      <h3 class="t-title">CREDIT ADVICE</h3>
+      <p class="t-desc">Your score is the foundation of your financial life. Let's audit it, fix it, and leverage it.</p>
+      <ul class="t-list">
+        <li>Credit report audit and dispute strategy</li>
+        <li>Score improvement roadmap</li>
+        <li>Tradeline and utilization optimization</li>
+        <li>Business credit building guidance</li>
+      </ul>
+      <a href="#contact" class="btn-gold">Book Now</a>
+    </div>
+    <div class="t-visual">
+      <img src="/images/heli.jpeg" class="t-img" alt="Credit">
+      <div class="corner tl"></div><div class="corner br"></div>
+    </div>
+  </div>
+  <div class="tab-pane" id="t3">
+    <div>
+      <div class="t-icon">🏠</div>
+      <h3 class="t-title">REAL ESTATE</h3>
+      <p class="t-desc">Generational wealth is built in real estate. Let me help you evaluate, buy, and grow with confidence.</p>
+      <ul class="t-list">
+        <li>Investment property analysis</li>
+        <li>First-time buyer guidance</li>
+        <li>Market research and trend analysis</li>
+        <li>Long-term portfolio planning</li>
+      </ul>
+      <a href="#contact" class="btn-gold">Book Now</a>
+    </div>
+    <div class="t-visual">
+      <img src="/images/corvette.jpeg" class="t-img" alt="Real Estate">
+      <div class="corner tl"></div><div class="corner br"></div>
+    </div>
+  </div>
+  <div class="tab-pane" id="t4">
+    <div>
+      <div class="t-icon">🏦</div>
+      <h3 class="t-title">MORTGAGES</h3>
+      <p class="t-desc">One percentage point off your rate can save you six figures. Let's get you on the right side of that math.</p>
+      <ul class="t-list">
+        <li>Pre-qualification preparation</li>
+        <li>FHA, VA, and conventional loan comparison</li>
+        <li>Rate negotiation strategies</li>
+        <li>Refinancing analysis</li>
+      </ul>
+      <a href="#contact" class="btn-gold">Book Now</a>
+    </div>
+    <div class="t-visual">
+      <img src="/images/corvette2.jpeg" class="t-img" alt="Mortgage">
+      <div class="corner tl"></div><div class="corner br"></div>
+    </div>
+  </div>
+  <div class="tab-pane" id="t5">
+    <div>
+      <div class="t-icon">🛡</div>
+      <h3 class="t-title">INSURANCE</h3>
+      <p class="t-desc">Don't overpay for what you don't need, and don't leave yourself exposed where it matters most.</p>
+      <ul class="t-list">
+        <li>Life, auto, home and health review</li>
+        <li>Coverage gap analysis</li>
+        <li>Cost optimization across providers</li>
+        <li>Bundling and savings strategy</li>
+      </ul>
+      <a href="#contact" class="btn-gold">Book Now</a>
+    </div>
+    <div class="t-visual">
+      <img src="/images/car.jpeg" class="t-img" alt="Insurance">
+      <div class="corner tl"></div><div class="corner br"></div>
+    </div>
+  </div>
+</section>
+
+<!-- P&L CHART -->
+<section id="pnl">
+  <div class="inner">
+    <div class="pnl-text reveal-left">
+      <div class="sec-label">Track Record</div>
+      <h2 class="sec-title" style="margin-bottom:1.5rem">THE NUMBERS<br><span>DON'T LIE.</span></h2>
+      <p>Every strategy I teach is one I run myself. Real capital, real risk, real results — shared with the community every day.</p>
+      <p>The Discord #profits channel shows wins in real time. No cherry-picking. No old screenshots.</p>
+      <div class="pnl-metrics">
+        <div class="pnl-metric"><span class="pm-label">Avg Monthly Return</span><span class="pm-val" data-target-pnl="32" data-suffix="%">0%</span></div>
+        <div class="pnl-metric"><span class="pm-label">Community Win Rate</span><span class="pm-val" data-target-pnl="68" data-suffix="%">0%</span></div>
+        <div class="pnl-metric"><span class="pm-label">Active Members</span><span class="pm-val" data-target-pnl="200" data-suffix="+">0+</span></div>
+      </div>
+    </div>
+    <div class="pnl-chart-wrap reveal-right">
+      <div class="chart-label">Equity Curve · Sample Account</div>
+      <canvas id="pnlChart"></canvas>
+    </div>
+  </div>
+</section>
+
+<!-- QUIZ -->
+<section id="quiz">
+  <div class="reveal">
+    <div class="sec-label">Find Your Fit</div>
+    <h2 class="sec-title">NOT SURE<br>WHERE TO <span>START?</span></h2>
+    <p style="color:rgba(242,242,238,0.5);font-size:0.9rem;max-width:420px;margin:0 auto;line-height:1.8">Answer 3 quick questions and I'll point you to the right service.</p>
+  </div>
+  <div class="quiz-progress">
+    <div class="qp-dot active"></div><div class="qp-dot"></div><div class="qp-dot"></div>
+  </div>
+  <div class="quiz-steps">
+    <div class="quiz-step active" id="qs0">
+      <div class="quiz-q">WHAT'S YOUR MAIN GOAL?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-step="0" data-val="trading">Make money trading markets</button>
+        <button class="quiz-opt" data-step="0" data-val="credit">Improve my credit score</button>
+        <button class="quiz-opt" data-step="0" data-val="realestate">Buy or invest in real estate</button>
+        <button class="quiz-opt" data-step="0" data-val="mortgage">Get a better mortgage rate</button>
+        <button class="quiz-opt" data-step="0" data-val="insurance">Protect what I've built</button>
+        <button class="quiz-opt" data-step="0" data-val="all">All of the above</button>
+      </div>
+    </div>
+    <div class="quiz-step" id="qs1">
+      <div class="quiz-q">WHERE ARE YOU RIGHT NOW?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-step="1" data-val="beginner">Complete beginner</button>
+        <button class="quiz-opt" data-step="1" data-val="some">Some experience, need direction</button>
+        <button class="quiz-opt" data-step="1" data-val="experienced">Experienced, want to level up</button>
+      </div>
+    </div>
+    <div class="quiz-step" id="qs2">
+      <div class="quiz-q">WHAT'S YOUR TIMELINE?</div>
+      <div class="quiz-options">
+        <button class="quiz-opt" data-step="2" data-val="now">I want to start now</button>
+        <button class="quiz-opt" data-step="2" data-val="soon">Within the next 1-3 months</button>
+        <button class="quiz-opt" data-step="2" data-val="planning">Just planning ahead</button>
+      </div>
+    </div>
+    <div id="quiz-result">
+      <div class="result-card">
+        <div class="result-service" id="result-service">STOCK TRADING</div>
+        <div class="result-desc" id="result-desc"></div>
+        <a href="#contact" class="btn-gold">Book Your Free Call →</a>
+      </div>
+      <button class="quiz-restart" onclick="resetQuiz()">← Start over</button>
+    </div>
+  </div>
+</section>
+
+<!-- WINS FEED -->
+<section id="wins">
+  <div class="inner">
+    <div class="wins-top">
+      <div class="reveal-left">
+        <div class="sec-label">Community Wins</div>
+        <h2 class="sec-title">REAL PEOPLE.<br><span>REAL WINS.</span></h2>
+        <p style="color:rgba(242,242,238,0.5);font-size:0.9rem;line-height:1.85;margin-bottom:1.5rem">Every win below is from a real client or community member — posted in the Discord every single day.</p>
+        <div class="wins-stat-row">
+          <div class="wstat"><div class="wstat-n">$712</div><div class="wstat-l">Single Trade</div></div>
+          <div class="wstat"><div class="wstat-n">350+</div><div class="wstat-l">Clients</div></div>
+          <div class="wstat"><div class="wstat-n">Daily</div><div class="wstat-l">New Wins</div></div>
+        </div>
+        <div style="margin-top:2rem"><a href="#contact" class="btn-gold">Join the Community</a></div>
+      </div>
+      <div class="reveal-right">
+        <div class="feed-label"><span class="live-dot"></span> Live from Discord #profits</div>
+        <div class="wins-feed-wrap">
+          <div class="wins-feed" id="winsFeed"></div>
+        </div>
+      </div>
+    </div>
+    <div class="wins-photos reveal">
+      <img src="/images/win1.jpeg" class="wins-photo" alt="Client win">
+      <img src="/images/win2.png" class="wins-photo" alt="Client win">
+    </div>
+  </div>
+</section>
+
+<!-- CAROUSEL -->
+<section id="testimonials">
+  <div class="reveal">
+    <div class="sec-label">What Clients Say</div>
+    <h2 class="sec-title">STRAIGHT FROM<br><span>THE PEOPLE.</span></h2>
+  </div>
+  <div class="carousel-wrap reveal">
+    <div class="carousel-track" id="carouselTrack"></div>
+  </div>
+  <div class="carousel-nav" id="carouselNav"></div>
+  <div class="carousel-arrows">
+    <button class="carr" id="prevBtn">←</button>
+    <button class="carr" id="nextBtn">→</button>
+  </div>
+</section>
+
+<!-- ABOUT -->
+<section id="about">
+  <div class="about-grid">
+    <div class="about-img-stack reveal-left">
+      <img src="/images/portrait.jpeg" class="aimg aimg1" alt="Jonathan Perez">
+      <img src="/images/car2.jpeg" class="aimg aimg2" alt="Jonathan Perez">
+      <div class="aimg-line"></div>
+    </div>
+    <div class="about-body reveal-right">
+      <div class="sec-label">About</div>
+      <h2 class="sec-title">BUILT FROM<br><span>THE GROUND UP.</span></h2>
+      <p>Jonathan Perez started MELLOFX with one goal: make real financial guidance accessible to real people. Not corporate scripts. Not generic advice. The actual game.</p>
+      <p>With 350+ clients served across stocks, credit, real estate, mortgages, and insurance, Jonathan has become the advisor people send their friends to when they're tired of winging it.</p>
+      <p>Based in Los Angeles. In the markets every single day. Building in public — wins, losses, and everything in between.</p>
+      <div class="about-sig">
+        <div class="sig-name">Jonathan Perez</div>
+        <div class="sig-role">Founder, MELLOFX · @imjonathanperezz</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FAQ -->
+<section id="faq">
+  <div class="inner">
+    <div class="faq-head reveal">
+      <div class="sec-label">Common Questions</div>
+      <h2 class="sec-title">GOT QUESTIONS?<br><span>GOOD.</span></h2>
+    </div>
+    <div class="faq-item reveal"><button class="faq-q">Do I need experience to work with you? <span class="faq-ico">+</span></button><div class="faq-a"><p>Zero experience needed. Whether you've never opened a brokerage account or you've been trading for years, we meet you exactly where you are.</p></div></div>
+    <div class="faq-item reveal"><button class="faq-q">How does the consultation process work? <span class="faq-ico">+</span></button><div class="faq-a"><p>Reach out via Instagram or the contact section. We'll hop on a free call, go over your situation and goals, and map out a real plan together — zero pressure.</p></div></div>
+    <div class="faq-item reveal"><button class="faq-q">Can you help me with more than one service? <span class="faq-ico">+</span></button><div class="faq-a"><p>Yes — and that's actually the biggest advantage. Your credit affects your mortgage rate. Your mortgage affects your real estate strategy. Having one advisor across everything means your plan is actually coordinated.</p></div></div>
+    <div class="faq-item reveal"><button class="faq-q">How much money do I need to start? <span class="faq-ico">+</span></button><div class="faq-a"><p>Depends on the service. Credit and insurance consulting require no capital. For trading and real estate, we'll figure out the right starting point based on where you actually are.</p></div></div>
+    <div class="faq-item reveal"><button class="faq-q">Is there a community I can join? <span class="faq-ico">+</span></button><div class="faq-a"><p>Yes — the STRATSTONE FX Discord is free to join. It's where the community shares wins, live signals, and analysis in real time.</p></div></div>
+    <div class="faq-item reveal"><button class="faq-q">Do you work with clients outside of LA? <span class="faq-ico">+</span></button><div class="faq-a"><p>100%. Based in LA but working with clients everywhere. Everything is done online — calls, DMs, follow-ups — on your schedule.</p></div></div>
+  </div>
+</section>
+
+<!-- CONTACT -->
+<section id="contact">
+  <div class="contact-inner reveal">
+    <div class="sec-label">Get In Touch</div>
+    <h2 class="sec-title" style="font-family:'Bebas Neue',sans-serif;font-size:clamp(3rem,6vw,5rem);letter-spacing:0.04em;line-height:0.92;margin-bottom:1rem">READY TO<br>MAKE YOUR <span style="color:var(--gold)">MOVE?</span></h2>
+    <p>DM me on Instagram or hit any platform below. Every message gets a personal reply within 24 hours.</p>
+    <div class="socials">
+      <a href="https://instagram.com/imjonathanperezz" target="_blank" class="soc-btn">📸 Instagram</a>
+      <a href="https://tiktok.com/@only1mello" target="_blank" class="soc-btn">🎵 TikTok</a>
+      <a href="https://snapchat.com/add/realmello2" target="_blank" class="soc-btn">👻 Snapchat</a>
+      <a href="https://youtube.com/@imjustmello" target="_blank" class="soc-btn">▶ YouTube</a>
+      <a href="#" target="_blank" class="soc-btn">💬 Discord</a>
+    </div>
+    <a href="https://instagram.com/imjonathanperezz" target="_blank" class="btn-gold">DM ON INSTAGRAM →</a>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <div class="f-logo">MELLOFX</div>
+  <p>© 2026 MELLOFX · Jonathan Perez · Los Angeles, CA</p>
+  <p class="f-disc">Consulting for informational purposes only. Not licensed investment advice. Individual results vary.</p>
+</footer>
+
+<!-- AI CHAT -->
+<div id="chat-bubble">
+  <div id="chat-panel">
+    <div class="chat-header">
+      <div class="chat-avatar">💬</div>
+      <div><div class="chat-hname">MELLOFX Assistant</div><div class="chat-hstatus">Online now</div></div>
+      <button class="chat-close" onclick="toggleChat()">✕</button>
+    </div>
+    <div class="chat-messages" id="chatMessages"></div>
+    <div class="chat-quick" id="chatQuick">
+      <button class="quick-btn" onclick="quickSend('What services do you offer?')">Services</button>
+      <button class="quick-btn" onclick="quickSend('How much does it cost?')">Pricing</button>
+      <button class="quick-btn" onclick="quickSend(&quot;I&apos;m a complete beginner&quot;)">I'm new</button>
+      <button class="quick-btn" onclick="quickSend('How do I get started?')">Get started</button>
+    </div>
+    <div class="chat-input-row">
+      <input id="chat-input" type="text" placeholder="Ask anything..." maxlength="200">
+      <button id="chat-send" onclick="sendChat()">➤</button>
+    </div>
+  </div>
+  <button id="chat-toggle" onclick="toggleChat()">💬</button>
+</div>
+
+<script>
+// CURSOR GLOW
+const glow = document.getElementById('cursor-glow');
+let mx = -999, my = -999;
+document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
+(function animCursor(){ glow.style.left = mx+'px'; glow.style.top = my+'px'; requestAnimationFrame(animCursor); })();
+
+// PARALLAX
+window.addEventListener('scroll', () => {
+  const s = window.scrollY;
+  if (s < window.innerHeight * 1.5) document.getElementById('heroBg').style.transform = `translateY(${s * 0.35}px)`;
+}, { passive: true });
+
+// SCROLL REVEALS
+const revObs = new IntersectionObserver(entries => {
+  entries.forEach(e => { if(e.isIntersecting){ e.target.classList.add('visible'); revObs.unobserve(e.target); }});
+}, { threshold: 0.12 });
+document.querySelectorAll('.reveal,.reveal-left,.reveal-right').forEach(el => revObs.observe(el));
+
+// STAT COUNTERS
+const cObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(!e.isIntersecting) return;
+    const el = e.target, target = +el.dataset.target, suffix = el.dataset.suffix||'';
+    let cur = 0; const step = Math.ceil(target/55);
+    const t = setInterval(() => { cur = Math.min(cur+step,target); el.textContent = cur+suffix; if(cur>=target) clearInterval(t); }, 18);
+    cObs.unobserve(el);
+  });
+}, { threshold: 0.5 });
+document.querySelectorAll('[data-target]').forEach(el => cObs.observe(el));
+
+const pObs = new IntersectionObserver(entries => {
+  entries.forEach(e => {
+    if(!e.isIntersecting) return;
+    const el = e.target, target = +el.dataset.targetPnl, suffix = el.dataset.suffix||'';
+    let cur = 0; const step = Math.ceil(target/50);
+    const t = setInterval(() => { cur = Math.min(cur+step,target); el.textContent = cur+suffix; if(cur>=target) clearInterval(t); }, 20);
+    pObs.unobserve(el);
+  });
+}, { threshold: 0.5 });
+document.querySelectorAll('[data-target-pnl]').forEach(el => pObs.observe(el));
+
+// PRICE TICKER
+const priceData = [
+  {sym:'XAUUSD',val:2321.10,chg:1.82},{sym:'GBPJPY',val:194.08,chg:0.63},
+  {sym:'NAS100',val:18402,chg:2.71},{sym:'EURUSD',val:1.0842,chg:-0.31},
+  {sym:'BTC/USD',val:67240,chg:3.12},{sym:'US30',val:38580,chg:1.52},
+  {sym:'USDCAD',val:1.3612,chg:-0.82},{sym:'SPX500',val:5204,chg:0.94},
+];
+function fmtPrice(sym,val){ return val>1000 ? val.toLocaleString('en-US',{maximumFractionDigits:0}) : val>10 ? val.toFixed(2) : val.toFixed(4); }
+function buildTicker(){
+  const d2 = [...priceData,...priceData];
+  document.getElementById('priceTrack').innerHTML =
+    '<span style="display:inline-flex;align-items:center;margin-left:1rem"><span class="live-dot" style="margin-right:8px"></span><span style="font-size:0.68rem;letter-spacing:0.15em;text-transform:uppercase;color:var(--muted);margin-right:1.5rem">LIVE</span></span>' +
+    d2.map(p=>`<span class="price-item"><span class="psym">${p.sym}</span><span class="pval" data-sym="${p.sym}">${fmtPrice(p.sym,p.val)}</span><span class="pchg ${p.chg>=0?'up':'dn'}" data-chg="${p.sym}">${p.chg>=0?'+':''}${p.chg.toFixed(2)}%</span></span>`).join('');
+}
+buildTicker();
+setInterval(() => {
+  priceData.forEach(p => {
+    p.val += (Math.random()-0.499)*p.val*0.0003;
+    p.chg += (Math.random()-0.499)*0.05;
+    document.querySelectorAll(`[data-sym="${p.sym}"]`).forEach(el => el.textContent = fmtPrice(p.sym,p.val));
+    document.querySelectorAll(`[data-chg="${p.sym}"]`).forEach(el => { el.textContent=(p.chg>=0?'+':'')+p.chg.toFixed(2)+'%'; el.className='pchg '+(p.chg>=0?'up':'dn'); });
+  });
+}, 2500);
+
+// TABS
+document.querySelectorAll('.tab-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById(btn.dataset.tab).classList.add('active');
+  });
+});
+
+// P&L CHART
+let chartDrawn = false;
+new IntersectionObserver(entries => {
+  if(entries[0].isIntersecting && !chartDrawn){ chartDrawn=true; drawChart(); }
+}, {threshold:0.4}).observe(document.getElementById('pnlChart'));
+
+function drawChart(){
+  const pts = 70;
+  const data = [10000];
+  for(let i=1;i<pts;i++){
+    const t=0.0035, n=(Math.random()-0.42)*0.045;
+    const d1=(i>20&&i<26)?-0.025:0, d2=(i>48&&i<53)?-0.02:0;
+    data.push(data[i-1]*(1+t+n+d1+d2));
+  }
+  const labels = Array.from({length:pts},(_,i)=>i===0?'Jan':i===17?'Feb':i===34?'Mar':i===51?'Apr':i===69?'May':'');
+  const ctx = document.getElementById('pnlChart').getContext('2d');
+  const grad = ctx.createLinearGradient(0,0,0,280);
+  grad.addColorStop(0,'rgba(46,204,113,0.3)'); grad.addColorStop(1,'rgba(46,204,113,0)');
+  new Chart(ctx,{type:'line',data:{labels,datasets:[{data,borderColor:'#2ecc71',borderWidth:2,backgroundColor:grad,pointRadius:0,pointHoverRadius:4,tension:0.4,fill:true}]},options:{responsive:true,maintainAspectRatio:false,animation:{duration:2000,easing:'easeInOutQuart'},plugins:{legend:{display:false},tooltip:{backgroundColor:'#111',borderColor:'#1c1c1c',borderWidth:1,titleColor:'#555',bodyColor:'#2ecc71',callbacks:{label:c=>'$'+Math.round(c.parsed.y).toLocaleString()}}},scales:{x:{grid:{color:'rgba(255,255,255,0.03)'},ticks:{color:'#555',font:{size:10}}},y:{grid:{color:'rgba(255,255,255,0.04)'},ticks:{color:'#555',font:{size:10},callback:v=>'$'+Math.round(v/1000)+'k'}}}}});
+}
+
+// QUIZ
+const qAnswers = {};
+const serviceMap = {
+  trading:{name:'STOCK TRADING',desc:"You're ready to learn the markets and build a real edge. Jonathan's trading consulting gives you a system and the discipline to execute it."},
+  credit:{name:'CREDIT CONSULTING',desc:"Your credit score is the key to everything else. Let's audit it, build a roadmap, and get you into position to unlock better rates and more options."},
+  realestate:{name:'REAL ESTATE',desc:"Real estate is one of the most powerful wealth vehicles there is. Jonathan will help you evaluate deals and buy with real confidence."},
+  mortgage:{name:'MORTGAGE CONSULTING',desc:"The right rate can save you six figures over the life of a loan. Let's make sure your credit and strategy are dialed in before you sign anything."},
+  insurance:{name:'INSURANCE REVIEW',desc:"You've built something worth protecting. Let's audit your coverage, close the gaps, and make sure you're not overpaying."},
+  all:{name:'FULL CONSULTATION',desc:"You're thinking about the big picture — and that's exactly the right move. A full consultation covers everything from credit to real estate to insurance, all working together."},
+};
+document.querySelectorAll('.quiz-opt').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const step=+btn.dataset.step, val=btn.dataset.val;
+    qAnswers[step]=val;
+    document.querySelectorAll(`[data-step="${step}"]`).forEach(b=>b.classList.remove('selected'));
+    btn.classList.add('selected');
+    setTimeout(()=>{
+      if(step<2){
+        document.getElementById(`qs${step}`).classList.remove('active');
+        document.getElementById(`qs${step+1}`).classList.add('active');
+        document.querySelectorAll('.qp-dot').forEach((d,i)=>d.classList.toggle('active',i<=step+1));
+      } else {
+        document.querySelectorAll('.quiz-step').forEach(s=>s.classList.remove('active'));
+        document.querySelectorAll('.qp-dot').forEach(d=>d.classList.add('active'));
+        const r=serviceMap[qAnswers[0]||'all'];
+        document.getElementById('result-service').textContent=r.name;
+        document.getElementById('result-desc').textContent=r.desc;
+        document.getElementById('quiz-result').style.display='block';
+      }
+    },350);
+  });
+});
+function resetQuiz(){
+  Object.keys(qAnswers).forEach(k=>delete qAnswers[k]);
+  document.getElementById('quiz-result').style.display='none';
+  document.querySelectorAll('.quiz-step').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.quiz-opt').forEach(b=>b.classList.remove('selected'));
+  document.getElementById('qs0').classList.add('active');
+  document.querySelectorAll('.qp-dot').forEach((d,i)=>d.classList.toggle('active',i===0));
+}
+
+// WINS FEED
+const winPool = [
+  {name:'Oscar L.',amount:'+$712.92',detail:'GBPJPY · TradeLocker',icon:'🔥'},
+  {name:'Fidel B.',amount:'+$626.86',detail:'GBPJPY · 30x leverage',icon:'💰'},
+  {name:'Marcus T.',amount:'+$5,200',detail:'First month consulting',icon:'📈'},
+  {name:'Sarah K.',amount:'+40%',detail:'Portfolio · 90 days',icon:'🚀'},
+  {name:'Alex P.',amount:'762 score',detail:'Credit · up from 580',icon:'💳'},
+  {name:'David R.',amount:'+$1,840',detail:'XAUUSD · 3 trades',icon:'⚡'},
+  {name:'JJ F.',amount:'+$81.40',detail:'XAUUSD · live account',icon:'✅'},
+  {name:'Tyler D.',amount:'+$3,100',detail:'SPX options · weekly',icon:'🎯'},
+  {name:'Brianna W.',amount:'+$8,400',detail:'Monthly trading income',icon:'💸'},
+  {name:'Chris L.',amount:'$100K',detail:'Funded account unlocked',icon:'🏆'},
+];
+let winIdx=0;
+const feed=document.getElementById('winsFeed');
+function addWin(){
+  const w=winPool[winIdx%winPool.length]; winIdx++;
+  const el=document.createElement('div'); el.className='win-entry';
+  const ago=Math.floor(Math.random()*8)+1;
+  el.innerHTML=`<span class="we-icon">${w.icon}</span><span class="we-name">${w.name}</span><span class="we-amount">${w.amount}</span><span class="we-time">${ago}m ago</span>`;
+  feed.insertBefore(el,feed.firstChild);
+  if(feed.children.length>12) feed.removeChild(feed.lastChild);
+}
+for(let i=0;i<6;i++) addWin();
+setInterval(addWin, 4500 + Math.random()*3000);
+
+// CAROUSEL
+const testimonials = [
+  {quote:"Jonathan doesn't just give you signals — he teaches you the why behind every move. That's what actually changes how you trade.",name:'Marcus T.',result:'+$5,200/mo',service:'Stock Trading'},
+  {quote:"My credit went from 572 to 748 in four months. I honestly didn't think it was possible that fast.",name:'Alex P.',result:'748 Credit Score',service:'Credit Consulting'},
+  {quote:"I was about to sign a 30-year mortgage at a terrible rate. Jonathan caught issues in my credit report that none of the lenders mentioned.",name:'Rachel V.',result:'1.2% Better Rate',service:'Mortgage Consulting'},
+  {quote:"The Discord alone is worth it. Watching live trades and getting real analysis every morning has completely changed how I see the markets.",name:'David R.',result:'+$1,840 Month 1',service:'Stock Trading'},
+  {quote:"He helped me close on my first investment property at 24. I had no idea what I was doing — he walked me through every single step.",name:'Jasmine L.',result:'First Property @ 24',service:'Real Estate'},
+  {quote:"Most advisors talk to you like you're dumb. Jonathan just tells you what's actually going on and what to do about it. Zero fluff.",name:'Tyler D.',result:'$3,100 in 30 Days',service:'Stock Trading'},
+];
+const track=document.getElementById('carouselTrack'), navEl=document.getElementById('carouselNav');
+let curSlide=0;
+const vis=()=>window.innerWidth<900?1:3;
+track.innerHTML=testimonials.map(t=>`<div class="tcard"><p class="tcard-quote">"${t.quote}"</p><div class="tcard-name">${t.name}</div><div class="tcard-result">${t.result}</div><div class="tcard-service">${t.service}</div></div>`).join('');
+navEl.innerHTML=testimonials.map((_,i)=>`<div class="cnav-dot${i===0?' active':''}" onclick="goSlide(${i})"></div>`).join('');
+function goSlide(idx){
+  curSlide=Math.max(0,Math.min(idx,testimonials.length-vis()));
+  const w=(track.children[0]?.offsetWidth||0)+24;
+  track.style.transform=`translateX(-${curSlide*w}px)`;
+  document.querySelectorAll('.cnav-dot').forEach((d,i)=>d.classList.toggle('active',i===curSlide));
+}
+document.getElementById('prevBtn').onclick=()=>goSlide(Math.max(0,curSlide-1));
+document.getElementById('nextBtn').onclick=()=>goSlide(Math.min(testimonials.length-vis(),curSlide+1));
+let auto=setInterval(()=>goSlide((curSlide+1)%(testimonials.length-vis()+1)),4500);
+track.addEventListener('mouseenter',()=>clearInterval(auto));
+track.addEventListener('mouseleave',()=>{auto=setInterval(()=>goSlide((curSlide+1)%(testimonials.length-vis()+1)),4500);});
+
+// FAQ
+document.querySelectorAll('.faq-q').forEach(btn=>{
+  btn.addEventListener('click',()=>{
+    const item=btn.parentElement, isOpen=item.classList.contains('open');
+    document.querySelectorAll('.faq-item').forEach(i=>i.classList.remove('open'));
+    if(!isOpen) item.classList.add('open');
+  });
+});
+
+// AI CHAT
+let chatHistory=[], chatOpen=false;
+function toggleChat(){
+  chatOpen=!chatOpen;
+  document.getElementById('chat-panel').classList.toggle('open',chatOpen);
+  if(chatOpen && chatHistory.length===0) addBotMsg("Hey! I'm the MELLOFX assistant. Ask me anything about Jonathan's services 👇");
+}
+function addBotMsg(text){ const m=document.getElementById('chatMessages'); document.getElementById('chatQuick').style.display='flex'; const d=document.createElement('div'); d.className='msg bot'; d.textContent=text; m.appendChild(d); m.scrollTop=m.scrollHeight; }
+function addUserMsg(text){ const m=document.getElementById('chatMessages'); document.getElementById('chatQuick').style.display='none'; const d=document.createElement('div'); d.className='msg user'; d.textContent=text; m.appendChild(d); m.scrollTop=m.scrollHeight; }
+function addTyping(){ const m=document.getElementById('chatMessages'); const d=document.createElement('div'); d.className='msg bot'; d.id='typing-indicator'; d.innerHTML='<div class="typing-dots"><span></span><span></span><span></span></div>'; m.appendChild(d); m.scrollTop=m.scrollHeight; }
+function removeTyping(){ document.getElementById('typing-indicator')?.remove(); }
+async function sendChat(){
+  const input=document.getElementById('chat-input'), text=input.value.trim();
+  if(!text) return; input.value='';
+  addUserMsg(text); chatHistory.push({role:'user',content:text}); addTyping();
+  try{
+    const res=await fetch('/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({messages:chatHistory})});
+    const data=await res.json(); removeTyping();
+    const reply=data.reply||data.error||'Try DMing Jonathan directly @imjonathanperezz';
+    addBotMsg(reply); chatHistory.push({role:'assistant',content:reply});
+  } catch(e){ removeTyping(); addBotMsg("Can't connect right now — DM Jonathan on Instagram @imjonathanperezz for the fastest reply."); }
+}
+function quickSend(text){ document.getElementById('chat-input').value=text; sendChat(); }
+document.getElementById('chat-input').addEventListener('keydown',e=>{ if(e.key==='Enter') sendChat(); });
+</script>
+</body>
+</html>
