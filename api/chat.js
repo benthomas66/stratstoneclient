@@ -21,7 +21,7 @@ export default async function handler(req, res) {
       body: JSON.stringify({
         model: 'claude-haiku-4-5-20251001',
         max_tokens: 300,
-        system: `You are the MELLOFX assistant for Jonathan Perez. Be concise, direct, and helpful — 2-4 sentences max per response. 
+        system: `You are the Stratstone Consulting assistant for Jonathan Perez. Be concise, direct, and helpful — 2-4 sentences max per response. 
 
 Jonathan offers these services:
 - Stock Trading Consulting: portfolio strategy, entry/exit frameworks, risk management, 1-on-1 coaching
