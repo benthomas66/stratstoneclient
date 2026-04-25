@@ -173,12 +173,13 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;justify-content
 
 /* CAROUSEL */
 #testimonials{padding:7rem 3.5rem;max-width:1200px;margin:0 auto}
-.carousel-wrap{position:relative;overflow:hidden;margin-top:3rem}
-.carousel-track{display:flex;transition:transform 0.6s cubic-bezier(0.25,1,0.5,1)}
-.tcard{min-width:calc(33.333% - 1rem);margin-right:1.5rem;background:var(--card);border:1px solid var(--border);padding:2rem;position:relative;flex-shrink:0;transition:border-color 0.3s}
+.carousel-wrap{position:relative;overflow:hidden;margin-top:3rem;width:100%;container-type:inline-size;container-name:test-carousel}
+.carousel-track{display:flex;transition:transform 0.6s cubic-bezier(0.25,1,0.5,1);width:max-content;touch-action:pan-y}
+.tcard{--carousel-gap:1.25rem;flex:0 0 calc((100cqi - 2 * var(--carousel-gap)) / 3);width:calc((100cqi - 2 * var(--carousel-gap)) / 3);max-width:100%;box-sizing:border-box;margin-right:var(--carousel-gap);background:var(--card);border:1px solid var(--border);padding:clamp(1.25rem,3vw,2rem);position:relative;flex-shrink:0;transition:border-color 0.3s;display:flex;flex-direction:column;min-height:0;max-height:min(32rem,88dvh)}
 .tcard::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0;transition:opacity 0.3s}
 .tcard:hover::before{opacity:1}.tcard:hover{border-color:rgba(212,169,75,0.25)}
-.tcard-quote{font-size:0.92rem;color:rgba(242,242,238,0.6);line-height:1.8;margin-bottom:1.5rem;font-style:italic}
+.tcard-quote{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;font-size:clamp(0.82rem,2.4cqi,0.92rem);color:rgba(242,242,238,0.6);line-height:1.75;margin-bottom:1.25rem;font-style:italic;overflow-wrap:break-word;word-wrap:break-word}
+.tcard-meta{flex-shrink:0;margin-top:auto}
 .tcard-name{font-weight:600;font-size:0.88rem}
 .tcard-result{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--green);letter-spacing:0.05em}
 .tcard-service{font-size:0.68rem;letter-spacing:0.12em;text-transform:uppercase;color:var(--muted);margin-top:0.2rem}
@@ -277,7 +278,7 @@ footer p{font-size:0.72rem;color:var(--muted)}
   #pnl{padding:4rem 0}
   #wins,#faq,#contact,#quiz,#testimonials{padding:4rem 1.5rem}
   .wins-top{grid-template-columns:1fr}
-  .tcard{min-width:calc(100% - 1rem)}
+  .tcard{--carousel-gap:0;flex:0 0 100cqi;width:100cqi;margin-right:0;max-height:min(36rem,90dvh)}
   footer{flex-direction:column;gap:1rem;text-align:center;padding:2rem 1.5rem}
   .f-disc{text-align:center;max-width:100%}
   #chat-panel{width:290px}
@@ -832,19 +833,27 @@ const testimonials = [
 const track=document.getElementById('carouselTrack'), navEl=document.getElementById('carouselNav');
 let curSlide=0;
 const vis=()=>window.innerWidth<900?1:3;
-track.innerHTML=testimonials.map(t=>`<div class="tcard"><p class="tcard-quote">"${t.quote}"</p><div class="tcard-name">${t.name}</div><div class="tcard-result">${t.result}</div><div class="tcard-service">${t.service}</div></div>`).join('');
+function carouselStepPx(){
+  const card=track.children[0];
+  if(!card) return 0;
+  const mr=parseFloat(getComputedStyle(card).marginRight)||0;
+  return card.getBoundingClientRect().width+mr;
+}
+track.innerHTML=testimonials.map(t=>`<div class="tcard"><p class="tcard-quote">"${t.quote}"</p><div class="tcard-meta"><div class="tcard-name">${t.name}</div><div class="tcard-result">${t.result}</div><div class="tcard-service">${t.service}</div></div></div>`).join('');
 navEl.innerHTML=testimonials.map((_,i)=>`<div class="cnav-dot${i===0?' active':''}" onclick="goSlide(${i})"></div>`).join('');
 function goSlide(idx){
-  curSlide=Math.max(0,Math.min(idx,testimonials.length-vis()));
-  const w=(track.children[0]?.offsetWidth||0)+24;
-  track.style.transform=`translateX(-${curSlide*w}px)`;
+  const maxStart=Math.max(0,testimonials.length-vis());
+  curSlide=Math.max(0,Math.min(typeof idx==='number'?idx:curSlide,maxStart));
+  const step=carouselStepPx();
+  track.style.transform=`translateX(-${curSlide*step}px)`;
   document.querySelectorAll('.cnav-dot').forEach((d,i)=>d.classList.toggle('active',i===curSlide));
 }
-document.getElementById('prevBtn').onclick=()=>goSlide(Math.max(0,curSlide-1));
-document.getElementById('nextBtn').onclick=()=>goSlide(Math.min(testimonials.length-vis(),curSlide+1));
+document.getElementById('prevBtn').onclick=()=>goSlide(curSlide-1);
+document.getElementById('nextBtn').onclick=()=>goSlide(curSlide+1);
 let auto=setInterval(()=>goSlide((curSlide+1)%(testimonials.length-vis()+1)),4500);
 track.addEventListener('mouseenter',()=>clearInterval(auto));
 track.addEventListener('mouseleave',()=>{auto=setInterval(()=>goSlide((curSlide+1)%(testimonials.length-vis()+1)),4500);});
+window.addEventListener('resize',()=>{ goSlide(Math.min(curSlide,Math.max(0,testimonials.length-vis()))); });
 
 // FAQ
 document.querySelectorAll('.faq-q').forEach(btn=>{
