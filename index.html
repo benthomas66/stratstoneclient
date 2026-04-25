@@ -58,11 +58,14 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;justify-content
   background-position:70% 15%;
   background-repeat:no-repeat;
   filter:brightness(1.12) contrast(1.08) saturate(1.05);
-  animation:none;
+  animation:heroFloat 18s ease-in-out infinite alternate;
   transform-origin:center right;
   will-change:transform;
 }
-
+@keyframes heroFloat{
+  from{transform:scale(1.03) translateX(0)}
+  to{transform:scale(1.08) translateX(-1.5%)}
+}
 .hero-grad{
   position:absolute;inset:0;z-index:1;pointer-events:none;
   background:linear-gradient(90deg,rgba(0,0,0,0.88) 0%,rgba(0,0,0,0.72) 32%,rgba(0,0,0,0.35) 58%,rgba(0,0,0,0.08) 100%);
@@ -198,7 +201,7 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;justify-content
 .tcard{--carousel-gap:1.25rem;flex:0 0 calc((100cqi - 2 * var(--carousel-gap)) / 3);width:calc((100cqi - 2 * var(--carousel-gap)) / 3);max-width:100%;box-sizing:border-box;margin-right:var(--carousel-gap);background:var(--card);border:1px solid var(--border);padding:clamp(1.25rem,3vw,2rem);position:relative;flex-shrink:0;transition:border-color 0.3s;display:flex;flex-direction:column;min-height:0;max-height:min(32rem,88dvh)}
 .tcard::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--gold),transparent);opacity:0;transition:opacity 0.3s}
 .tcard:hover::before{opacity:1}.tcard:hover{border-color:rgba(212,169,75,0.25)}
-.tcard-quote{flex:1 1 auto;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;overscroll-behavior:contain;font-size:clamp(0.82rem,2.4cqi,0.92rem);color:rgba(242,242,238,0.6);line-height:1.75;margin-bottom:1.25rem;font-style:italic;overflow-wrap:break-word;word-wrap:break-word}
+.tcard-quote{flex:1 1 auto;min-height:0;overflow-y:auto;font-size:clamp(0.82rem,2.4cqi,0.92rem);color:rgba(242,242,238,0.6);line-height:1.75;margin-bottom:1.25rem;font-style:italic;overflow-wrap:break-word}
 .tcard-meta{flex-shrink:0;margin-top:auto}
 .tcard-name{font-weight:600;font-size:0.88rem}
 .tcard-result{font-family:'Bebas Neue',sans-serif;font-size:1.3rem;color:var(--green);letter-spacing:0.05em}
@@ -304,20 +307,31 @@ footer p{font-size:0.72rem;color:var(--muted)}
   .f-disc{text-align:center;max-width:100%}
   #chat-panel{width:290px}
 }
+
+/* MOBILE HERO — no animation, no parallax, swap to portrait photo */
 @media(max-width:768px){
-  #hero{min-height:100svh;min-height:100dvh;padding:4.75rem 0 max(1.5rem,env(safe-area-inset-bottom));box-sizing:border-box;align-items:flex-end}
-  .hero-content{max-width:min(20.5rem,88vw);margin-right:auto}
-  .hero-bg{
-    left:-8%;right:auto;width:116%;
-    background-position:100% 44%;
-    background-size:cover;
-    filter:brightness(0.98) contrast(1.05) saturate(1.05);
-    transform-origin:100% 44%;
-    animation:heroFloatMobile 20s ease-in-out infinite alternate;
+  #hero{
+    min-height:100svh;
+    min-height:100dvh;
+    padding:4.75rem 0 max(1.5rem,env(safe-area-inset-bottom));
+    box-sizing:border-box;
+    align-items:flex-end;
   }
-  @keyframes heroFloatMobile{
-    from{transform:scale(1.02) translateX(1.5%)}
-    to{transform:scale(1.08) translateX(0)}
+  .hero-content{
+    max-width:min(20.5rem,88vw);
+    margin-right:auto;
+  }
+  /* Kill ALL animation and transform on mobile — this is the fix */
+  .hero-bg-wrap{
+    transform:none !important;
+  }
+  .hero-bg{
+    background-image:url('/images/hero.jpeg');
+    background-position:center 20%;
+    background-size:cover;
+    filter:brightness(0.85) contrast(1.05) saturate(1.0);
+    animation:none !important;
+    transform:none !important;
   }
   .hero-grad{
     background:
@@ -707,8 +721,9 @@ let mx = -999, my = -999;
 document.addEventListener('mousemove', e => { mx = e.clientX; my = e.clientY; });
 (function animCursor(){ glow.style.left = mx+'px'; glow.style.top = my+'px'; requestAnimationFrame(animCursor); })();
 
-// PARALLAX (wrap only — keeps heroFloat transform on .hero-bg)
+// PARALLAX — desktop only, moves the wrap not the bg (preserves heroFloat animation)
 window.addEventListener('scroll', () => {
+  if (window.innerWidth < 768) return; // NO parallax on mobile
   const s = window.scrollY;
   const wrap = document.getElementById('heroBgWrap');
   if (wrap && s < window.innerHeight * 1.5) wrap.style.transform = `translateY(${s * 0.35}px)`;
