@@ -53,12 +53,15 @@ nav{position:fixed;top:0;left:0;right:0;z-index:200;display:flex;justify-content
 .hero-bg{
   position:absolute;inset:0;will-change:transform;
   background-image:url('/images/corvette.jpeg');
-  background-size:cover;background-position:center 60%;
+  background-size:118% 118%;
+  background-position:86% 48%;
+  background-repeat:no-repeat;
   filter: none;
   animation:hzoom 15s ease both;
+  transform-origin:82% 50%;
 }
-@keyframes hzoom{from{transform:scale(1.07)}to{transform:scale(1.0)}}
-.hero-grad{position:absolute;inset:0;background:linear-gradient(90deg,rgba(5,5,5,0.95) 35%,rgba(5,5,5,0.1) 100%),linear-gradient(to top,rgba(5,5,5,0.95) 0%,transparent 55%)}
+@keyframes hzoom{from{transform:scale(1.04)}to{transform:scale(1.0)}}
+.hero-grad{position:absolute;inset:0;background:linear-gradient(90deg,rgba(5,5,5,0.92) 26%,rgba(5,5,5,0.55) 44%,rgba(5,5,5,0.12) 68%,rgba(5,5,5,0.03) 100%),linear-gradient(to top,rgba(5,5,5,0.82) 0%,transparent 48%)}
 .hero-grid{position:absolute;inset:0;background-image:linear-gradient(rgba(212,169,75,1) 1px,transparent 1px),linear-gradient(90deg,rgba(212,169,75,1) 1px,transparent 1px);background-size:55px 55px;animation:gridappear 2s ease 0.5s forwards;opacity:0}
 @keyframes gridappear{to{opacity:0.03}}
 .hero-scan{position:absolute;inset:0;background:linear-gradient(to bottom,transparent 0%,rgba(212,169,75,0.025) 50%,transparent 100%);animation:scan 7s ease-in-out infinite}
@@ -269,6 +272,7 @@ footer p{font-size:0.72rem;color:var(--muted)}
 @media(max-width:900px){
   nav{padding:1rem 1.5rem}.nav-links{display:none}
   .hero-content{padding:0 1.5rem}
+  .hero-bg{background-size:125% 125%;background-position:82% 42%}
   #stats{grid-template-columns:repeat(2,1fr)}
   .stat-cell:nth-child(2){border-right:none}
   #services,#about,#testimonials{padding:4rem 1.5rem}
